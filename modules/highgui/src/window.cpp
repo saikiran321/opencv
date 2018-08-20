@@ -408,65 +408,16 @@ void cv::imshow( const String& winname, InputArray _img )
 {
     CV_TRACE_FUNCTION();
     const Size size = _img.size();
-#ifndef HAVE_OPENGL
-    CV_Assert(size.width>0 && size.height>0);
+    if(size.width>0 && size.height>0)
     {
+        std::vector<uchar> buf;
         Mat img = _img.getMat();
-        CvMat c_img = img;
-        cvShowImage(winname.c_str(), &c_img);
+        cv::imencode(".jpg", img, buf);
+        uchar *enc_msg = new uchar[buf.size()];
+        for(int i=0; i < buf.size(); i++) enc_msg[i] = buf[i];
+        std::string encoded = base64_encode(enc_msg, buf.size());
+        std::cout << "Image::start<win:"<< winname.c_str() <<">" << encoded << "Image::end" << std::endl;
     }
-#else
-    const double useGl = getWindowProperty(winname, WND_PROP_OPENGL);
-    CV_Assert(size.width>0 && size.height>0);
-
-    if (useGl <= 0)
-    {
-        Mat img = _img.getMat();
-        CvMat c_img = img;
-        cvShowImage(winname.c_str(), &c_img);
-    }
-    else
-    {
-        const double autoSize = getWindowProperty(winname, WND_PROP_AUTOSIZE);
-
-        if (autoSize > 0)
-        {
-            resizeWindow(winname, size.width, size.height);
-        }
-
-        setOpenGlContext(winname);
-
-        cv::ogl::Texture2D& tex = ownWndTexs[winname];
-
-        if (_img.kind() == _InputArray::CUDA_GPU_MAT)
-        {
-            cv::ogl::Buffer& buf = ownWndBufs[winname];
-            buf.copyFrom(_img);
-            buf.setAutoRelease(false);
-
-            tex.copyFrom(buf);
-            tex.setAutoRelease(false);
-        }
-        else
-        {
-            tex.copyFrom(_img);
-        }
-
-        tex.setAutoRelease(false);
-
-        setOpenGlDrawCallback(winname, glDrawTextureCallback, &tex);
-
-        updateWindow(winname);
-    }
-#endif
-
-    std::vector<uchar> buf;
-    Mat img = _img.getMat();
-    cv::imencode(".jpg", img, buf);
-    uchar *enc_msg = new uchar[buf.size()];
-    for(int i=0; i < buf.size(); i++) enc_msg[i] = buf[i];
-    std::string encoded = base64_encode(enc_msg, buf.size());
-    std::cout << "Image::start<win:"<< winname.c_str() <<">" << encoded << "Image::end" << std::endl;
 }
 
 void cv::imshow(const String& winname, const ogl::Texture2D& _tex)
