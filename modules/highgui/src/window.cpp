@@ -38,7 +38,7 @@
 // the use of this software, even if advised of the possibility of such damage.
 //
 //M*/
-
+#include <iostream>
 #include "precomp.hpp"
 #include <map>
 #include "opencv2/core/opengl.hpp"
